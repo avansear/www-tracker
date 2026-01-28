@@ -84,8 +84,20 @@ export default function Home() {
       </div>
 
       <div className="stack">
-        <TrackerField label="calories" value={totals.calories} step={10} onDelta={(d) => addDelta({ calories: d })} />
-        <TrackerField label="protein" value={totals.protein} step={1} onDelta={(d) => addDelta({ protein: d })} />
+        <TrackerField
+          label="calories"
+          value={totals.calories}
+          step={10}
+          extraStep={100}
+          onDelta={(d) => addDelta({ calories: d })}
+        />
+        <TrackerField
+          label="protein"
+          value={totals.protein}
+          step={1}
+          extraStep={10}
+          onDelta={(d) => addDelta({ protein: d })}
+        />
         <TrackerField label="fibre" value={totals.fibre} step={1} onDelta={(d) => addDelta({ fibre: d })} />
       </div>
 
