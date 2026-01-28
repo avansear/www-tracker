@@ -55,6 +55,10 @@ main {
   justify-content: center;
 }
 
+.btn + .btn {
+  margin-left: 12px;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

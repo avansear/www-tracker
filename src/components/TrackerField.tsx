@@ -9,7 +9,10 @@
  };
  
 export function TrackerField({ label, value, step, extraStep, onDelta }: TrackerFieldProps) {
-  const steps = extraStep ? [step, extraStep] : [step];
+  const deltas =
+    extraStep != null
+      ? [-extraStep, -step, step, extraStep]
+      : [-step, step];
 
    return (
     <div className="card">
@@ -19,15 +22,16 @@ export function TrackerField({ label, value, step, extraStep, onDelta }: Tracker
           <div>{value}</div>
         </div>
         <div>
-          {steps.map((s) => (
-            <span key={s}>
-              <button type="button" className="btn" onClick={() => onDelta(-s)}>
-                - {s}
-              </button>{" "}
-              <button type="button" className="btn" onClick={() => onDelta(s)}>
-                + {s}
-              </button>{" "}
-            </span>
+          {deltas.map((delta, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className="btn"
+              onClick={() => onDelta(delta)}
+            >
+              {delta < 0 ? "- " : "+ "}
+              {Math.abs(delta)}
+            </button>
           ))}
         </div>
       </div>
