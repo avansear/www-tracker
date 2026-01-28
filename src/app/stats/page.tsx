@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
-import MonthPickerButton from "./MonthPickerButton";
+import MonthYearStepper from "./MonthYearStepper";
  
 type StatsRow = {
   day: string; // YYYY-MM-DD
@@ -35,6 +35,19 @@ function currentMonthKeyInTZ(timeZone: string) {
   const month = parts.find((p) => p.type === "month")?.value;
   if (!year || !month) throw new Error("Failed to compute local month");
   return `${year}-${month}`; // YYYY-MM
+}
+
+function parseMonthYear(sp: Record<string, string | string[] | undefined>, fallback: string) {
+  const [fy, fm] = fallback.split("-");
+  const fallbackYear = Number(fy);
+  const fallbackMonth = Number(fm);
+
+  const yearRaw = typeof sp.year === "string" ? sp.year : "";
+  const monthRaw = typeof sp.month === "string" ? sp.month : "";
+
+  const year = yearRaw.match(/^\d{4}$/) ? Number(yearRaw) : fallbackYear;
+  const month = monthRaw.match(/^\d{2}$/) ? Number(monthRaw) : fallbackMonth;
+  return { year, month };
 }
 
 function monthBounds(monthKey: string) {
@@ -72,17 +85,16 @@ export default async function StatsPage({
 }) {
   const sp = (await searchParams) ?? {};
   const tz = "America/New_York";
-  const month =
-    typeof sp.month === "string" && sp.month.match(/^\d{4}-\d{2}$/)
-      ? sp.month
-      : currentMonthKeyInTZ(tz);
+  const fallback = currentMonthKeyInTZ(tz);
+  const { year, month } = parseMonthYear(sp, fallback);
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
 
-  const rows = await getRows(month);
+  const rows = await getRows(monthKey);
  
   return (
     <main>
       <div className="row">
-        <MonthPickerButton name="month" value={month} />
+        <MonthYearStepper year={year} month={month} />
         <Link href="/">back</Link>
       </div>
 
