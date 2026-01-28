@@ -106,9 +106,9 @@ export default async function StatsPage({
             <thead>
               <tr>
                 <th>date</th>
-                <th>calories (max 2000)</th>
-                <th>protein (max 160)</th>
-                <th>fibre (max 30)</th>
+                <th>calories</th>
+                <th>protein</th>
+                <th>fibre</th>
               </tr>
             </thead>
             <tbody>
