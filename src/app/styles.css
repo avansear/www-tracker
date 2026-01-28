@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Base page colors using ONLY the 3 theme5 vars */
+html[data-theme="theme5"] body {
+  background: var(--color-light);
+  color: var(--color-dark);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-theme="theme5"] body {
+    background: var(--color-dark);
+    color: var(--color-light);
+  }
+}
+
+/* Month picker icon contrast */
+html[data-theme="theme5"] input[type="month"] {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-theme="theme5"] input[type="month"] {
+    color-scheme: dark;
+  }
+}
