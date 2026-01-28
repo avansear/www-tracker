@@ -105,10 +105,10 @@ export default async function StatsPage({
           <table className="center">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Fibre</th>
+                <th>date</th>
+                <th>calories (max 2000)</th>
+                <th>protein (max 160)</th>
+                <th>fibre (max 30)</th>
               </tr>
             </thead>
             <tbody>
