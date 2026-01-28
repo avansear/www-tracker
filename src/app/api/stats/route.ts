@@ -50,9 +50,10 @@ function todayInTimeZoneISODate(timeZone: string) {
 
   if (readErr) return NextResponse.json({ error: readErr.message }, { status: 500 });
 
-  const nextCalories = (existing?.calories ?? 0) + caloriesDelta;
-  const nextProtein = (existing?.protein ?? 0) + proteinDelta;
-  const nextFibre = (existing?.fibre ?? 0) + fibreDelta;
+  // Clamp at 0 so you can't go negative.
+  const nextCalories = Math.max(0, (existing?.calories ?? 0) + caloriesDelta);
+  const nextProtein = Math.max(0, (existing?.protein ?? 0) + proteinDelta);
+  const nextFibre = Math.max(0, (existing?.fibre ?? 0) + fibreDelta);
 
   const { data, error } = await supabase
     .from("stats_tracker")

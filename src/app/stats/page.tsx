@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
+import MonthPickerButton from "./MonthPickerButton";
  
 type StatsRow = {
   day: string; // YYYY-MM-DD
@@ -7,6 +8,22 @@ type StatsRow = {
   protein: number;
   fibre: number;
 };
+
+function formatDayLabel(day: string) {
+  const m = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return day;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  // Use UTC noon to avoid timezone edge shifts when formatting.
+  const dt = new Date(Date.UTC(y, mo - 1, d, 12, 0, 0));
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(dt);
+}
 
 function currentMonthKeyInTZ(timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -46,7 +63,7 @@ async function getRows(monthKey: string): Promise<StatsRow[]> {
   const { data, error } = await q;
   if (error) return [];
   return (data ?? []) as StatsRow[];
- }
+}
  
 export default async function StatsPage({
   searchParams,
@@ -62,67 +79,40 @@ export default async function StatsPage({
 
   const rows = await getRows(month);
  
-   return (
-    <div className="min-h-screen font-sans bg-background text-foreground">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-10">
-        <div className="flex items-end justify-between gap-4">
-          <Link
-            href="/"
-            className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition
-                       bg-[color-mix(in_srgb,var(--color-light)_20%,transparent)]
-                       text-foreground
-                       hover:bg-[color-mix(in_srgb,var(--color-light)_30%,transparent)]"
-          >
-            Back
-          </Link>
+  return (
+    <main>
+      <div className="row">
+        <MonthPickerButton name="month" value={month} />
+        <Link href="/">back</Link>
+      </div>
 
-          <form method="get">
-            <input
-              type="month"
-              name="month"
-              defaultValue={month}
-              className="h-10 rounded-xl px-3 shadow-sm
-                         bg-[color-mix(in_srgb,var(--color-light)_20%,transparent)]
-                         text-foreground"
-            />
-          </form>
-        </div>
-
-        <div className="rounded-2xl overflow-hidden shadow-sm bg-[color-mix(in_srgb,var(--color-light)_20%,transparent)]">
-          {rows.length === 0 ? (
-            <div className="px-4 py-6 text-sm font-medium text-[color-mix(in_srgb,var(--color-light)_80%,transparent)]">
-              no data available
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="text-xs font-semibold uppercase text-[color-mix(in_srgb,var(--color-light)_80%,transparent)]">
-                  <tr>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Calories</th>
-                    <th className="px-4 py-3">Protein</th>
-                    <th className="px-4 py-3">Fibre</th>
-                  </tr>
-                </thead>
-                <tbody className="text-foreground">
-                  {rows.map((r) => (
-                    <tr
-                      key={r.day}
-                      className="odd:bg-[color-mix(in_srgb,var(--color-light)_12%,transparent)]"
-                    >
-                      <td className="px-4 py-3 font-medium tabular-nums">{r.day}</td>
-                      <td className="px-4 py-3 tabular-nums">{r.calories}</td>
-                      <td className="px-4 py-3 tabular-nums">{r.protein}</td>
-                      <td className="px-4 py-3 tabular-nums">{r.fibre}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-       </main>
-     </div>
-   );
- }
+      <div className="stack">
+        {rows.length === 0 ? (
+          <div>no data available</div>
+        ) : (
+          <table className="center">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Fibre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.day}>
+                  <td>{formatDayLabel(r.day)}</td>
+                  <td>{r.calories}</td>
+                  <td>{r.protein}</td>
+                  <td>{r.fibre}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </main>
+  );
+}
 

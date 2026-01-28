@@ -2,84 +2,94 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { SaveButton } from "@/components/SaveButton";
 import { TrackerField } from "@/components/TrackerField";
 
+type StatsRow = {
+  day: string; // YYYY-MM-DD
+  calories: number;
+  protein: number;
+  fibre: number;
+};
+
+function todayInTZISODate(timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  if (!year || !month || !day) return new Date().toISOString().slice(0, 10);
+  return `${year}-${month}-${day}`;
+}
+
 export default function Home() {
-  const [calories, setCalories] = useState(0);
-  const [protein, setProtein] = useState(0);
-  const [fibre, setFibre] = useState(0);
+  const tz = "America/New_York";
+  const today = useMemo(() => todayInTZISODate(tz), [tz]);
 
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
-
-  const payload = useMemo(() => ({ calories, protein, fibre }), [calories, protein, fibre]);
+  const [totals, setTotals] = useState<Pick<StatsRow, "calories" | "protein" | "fibre">>({
+    calories: 0,
+    protein: 0,
+    fibre: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If anything changes after saving, allow saving again.
-    if (saveState === "saved") setSaveState("idle");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payload.calories, payload.protein, payload.fibre]);
-
-  async function onSave() {
-    if (saveState === "saving") return;
-    setSaveState("saving");
-
-    try {
-      const res = await fetch("/api/stats", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Save failed");
-      setSaveState("saved");
-      // Since saves are additive (deltas), reset the local counters after saving.
-      setCalories(0);
-      setProtein(0);
-      setFibre(0);
-    } catch {
-      setSaveState("idle");
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/stats?from=${today}&to=${today}`, { cache: "no-store" });
+        const json = (await res.json().catch(() => null)) as { rows?: StatsRow[] } | null;
+        const row = json?.rows?.[0];
+        if (!cancelled) {
+          setTotals({
+            calories: row?.calories ?? 0,
+            protein: row?.protein ?? 0,
+            fibre: row?.fibre ?? 0,
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [today]);
+
+  async function addDelta(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
+    // optimistic UI
+    setTotals((t) => ({
+      calories: Math.max(0, t.calories + (delta.calories ?? 0)),
+      protein: Math.max(0, t.protein + (delta.protein ?? 0)),
+      fibre: Math.max(0, t.fibre + (delta.fibre ?? 0)),
+    }));
+
+    await fetch("/api/stats", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(delta),
+    }).catch(() => null);
   }
 
   return (
-    <div className="min-h-screen font-sans bg-background text-foreground">
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-10">
-        <header className="flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              avan personal tracker
-            </h1>
-            <Link
-              href="/stats"
-              className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition
-                         bg-[color-mix(in_srgb,var(--color-light)_20%,transparent)]
-                         text-foreground
-                         hover:bg-[color-mix(in_srgb,var(--color-light)_30%,transparent)]"
-            >
-              Stats
-            </Link>
-          </div>
-          <p className="text-sm text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
-            Calories, protein, fibre.
-          </p>
-        </header>
+    <main>
+      <div className="row">
+        <h2 style={{ margin: 0 }}>avan personal tracker</h2>
+        <Link href="/stats">stats</Link>
+      </div>
 
-        <section className="flex flex-col gap-3">
-          <TrackerField
-            label="Calories"
-            value={calories}
-            step={10}
-            min={0}
-            onChange={setCalories}
-          />
-          <TrackerField label="Protein" value={protein} step={1} min={0} onChange={setProtein} />
-          <TrackerField label="Fibre" value={fibre} step={1} min={0} onChange={setFibre} />
-        </section>
+      <div className="stack">
+        <TrackerField label="calories" value={totals.calories} step={10} onDelta={(d) => addDelta({ calories: d })} />
+        <TrackerField label="protein" value={totals.protein} step={1} onDelta={(d) => addDelta({ protein: d })} />
+        <TrackerField label="fibre" value={totals.fibre} step={1} onDelta={(d) => addDelta({ fibre: d })} />
+      </div>
 
-        <div className="pt-2">
-          <SaveButton state={saveState} onClick={onSave} />
-        </div>
-      </main>
-    </div>
+      {loading ? <div>loading…</div> : null}
+    </main>
   );
 }
