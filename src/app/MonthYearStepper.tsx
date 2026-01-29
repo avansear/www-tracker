@@ -26,7 +26,7 @@ export default function MonthYearStepper({ year, month }: { year: number; month:
     const params = new URLSearchParams();
     params.set("year", String(y));
     params.set("month", String(m).padStart(2, "0"));
-    router.push(`/stats?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   }
 
   return (
@@ -73,4 +73,3 @@ export default function MonthYearStepper({ year, month }: { year: number; month:
     </div>
   );
 }
-
