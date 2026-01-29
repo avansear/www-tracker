@@ -67,7 +67,7 @@ async function getRows(monthKey: string): Promise<StatsRow[]> {
   let q = supabase
     .from("stats_tracker")
     .select("day,calories,protein,fibre")
-    .order("day", { ascending: true });
+    .order("day", { ascending: false });
 
   if (bounds) {
     q = q.gte("day", bounds.startISO).lte("day", bounds.endISO);

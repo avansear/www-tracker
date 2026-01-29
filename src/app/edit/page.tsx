@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { TrackerField } from "@/components/TrackerField";
 import { PasswordGate } from "@/components/PasswordGate";
+import { DayStepper } from "@/components/DayStepper";
 
 type StatsRow = {
   day: string; // YYYY-MM-DD
@@ -30,6 +31,7 @@ function EditPage() {
   const tz = "America/New_York";
   const today = useMemo(() => todayInTZISODate(tz), [tz]);
 
+  const [selectedDate, setSelectedDate] = useState(today);
   const [totals, setTotals] = useState<Pick<StatsRow, "calories" | "protein" | "fibre">>({
     calories: 0,
     protein: 0,
@@ -42,7 +44,10 @@ function EditPage() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/stats?from=${today}&to=${today}`, { cache: "no-store" });
+        const res = await fetch(
+          `/api/stats?from=${selectedDate}&to=${selectedDate}`,
+          { cache: "no-store" },
+        );
         const json = (await res.json().catch(() => null)) as { rows?: StatsRow[] } | null;
         const row = json?.rows?.[0];
         if (!cancelled) {
@@ -60,10 +65,9 @@ function EditPage() {
     return () => {
       cancelled = true;
     };
-  }, [today]);
+  }, [selectedDate]);
 
   async function addDelta(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
-    // optimistic UI
     setTotals((t) => ({
       calories: Math.max(0, t.calories + (delta.calories ?? 0)),
       protein: Math.max(0, t.protein + (delta.protein ?? 0)),
@@ -73,7 +77,7 @@ function EditPage() {
     await fetch("/api/stats", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(delta),
+      body: JSON.stringify({ ...delta, day: selectedDate }),
     }).catch(() => null);
   }
 
@@ -85,6 +89,10 @@ function EditPage() {
           <Link href="/" className="underline">
             stats
           </Link>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-start gap-3 mt-4">
+          <DayStepper dateIso={selectedDate} onDateChange={setSelectedDate} />
         </div>
 
         <div className="grid gap-4 sm:gap-6 mt-4">
@@ -106,6 +114,7 @@ function EditPage() {
             label="fibre (max 30)"
             value={totals.fibre}
             step={1}
+            extraStep={5}
             onDelta={(d) => addDelta({ fibre: d })}
           />
         </div>
