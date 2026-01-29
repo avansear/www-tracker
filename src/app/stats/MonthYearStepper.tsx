@@ -30,23 +30,43 @@ export default function MonthYearStepper({ year, month }: { year: number; month:
   }
 
   return (
-    <div className="row" style={{ justifyContent: "flex-start" }}>
-      <div className="row" style={{ gap: 8 }}>
-        <button type="button" className="btn btn-square" onClick={() => set(year, month - 1)}>
+    <div className="flex flex-wrap items-center justify-start gap-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 sm:h-9 sm:w-9 min-w-10 sm:min-w-9 items-center justify-center border border-[#eeeeee] bg-[#111111] p-0 text-[#eeeeee] cursor-pointer touch-manipulation"
+          onClick={() => set(year, month - 1)}
+        >
           {"<"}
         </button>
-        <div className="box">{labelMonth}</div>
-        <button type="button" className="btn btn-square" onClick={() => set(year, month + 1)}>
+        <div className="flex h-10 sm:h-9 min-w-16 items-center justify-center border border-[#eeeeee] px-2.5 text-sm sm:text-base text-center">
+          {labelMonth}
+        </div>
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 sm:h-9 sm:w-9 min-w-10 sm:min-w-9 items-center justify-center border border-[#eeeeee] bg-[#111111] p-0 text-[#eeeeee] cursor-pointer touch-manipulation"
+          onClick={() => set(year, month + 1)}
+        >
           {">"}
         </button>
       </div>
 
-      <div className="row" style={{ gap: 8 }}>
-        <button type="button" className="btn btn-square" onClick={() => set(year - 1, month)}>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 sm:h-9 sm:w-9 min-w-10 sm:min-w-9 items-center justify-center border border-[#eeeeee] bg-[#111111] p-0 text-[#eeeeee] cursor-pointer touch-manipulation"
+          onClick={() => set(year - 1, month)}
+        >
           {"<"}
         </button>
-        <div className="box">{labelYear}</div>
-        <button type="button" className="btn btn-square" onClick={() => set(year + 1, month)}>
+        <div className="flex h-10 sm:h-9 min-w-16 items-center justify-center border border-[#eeeeee] px-2.5 text-sm sm:text-base text-center">
+          {labelYear}
+        </div>
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 sm:h-9 sm:w-9 min-w-10 sm:min-w-9 items-center justify-center border border-[#eeeeee] bg-[#111111] p-0 text-[#eeeeee] cursor-pointer touch-manipulation"
+          onClick={() => set(year + 1, month)}
+        >
           {">"}
         </button>
       </div>

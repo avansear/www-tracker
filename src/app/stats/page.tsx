@@ -92,36 +92,40 @@ export default async function StatsPage({
   const rows = await getRows(monthKey);
  
   return (
-    <main>
-      <div className="row">
+    <main className="max-w-[560px] mx-auto px-4 py-4 sm:p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <MonthYearStepper year={year} month={month} />
-        <Link href="/">back</Link>
+        <Link href="/" className="underline">
+          back
+        </Link>
       </div>
 
-      <div className="stack">
+      <div className="grid gap-4 sm:gap-6 mt-4">
         {rows.length === 0 ? (
           <div>no data available</div>
         ) : (
-          <table className="center">
-            <thead>
-              <tr>
-                <th>date</th>
-                <th>calories</th>
-                <th>protein</th>
-                <th>fibre</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.day}>
-                  <td>{formatDayLabel(r.day)}</td>
-                  <td>{r.calories}</td>
-                  <td>{r.protein}</td>
-                  <td>{r.fibre}</td>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full table-fixed text-center min-w-[400px]">
+              <thead>
+                <tr>
+                  <th className="w-1/4 text-sm sm:text-base">date</th>
+                  <th className="w-1/4 text-sm sm:text-base">calories</th>
+                  <th className="w-1/4 text-sm sm:text-base">protein</th>
+                  <th className="w-1/4 text-sm sm:text-base">fibre</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.day}>
+                    <td className="w-1/4 text-sm sm:text-base py-2">{formatDayLabel(r.day)}</td>
+                    <td className="w-1/4 text-sm sm:text-base py-2">{r.calories}</td>
+                    <td className="w-1/4 text-sm sm:text-base py-2">{r.protein}</td>
+                    <td className="w-1/4 text-sm sm:text-base py-2">{r.fibre}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </main>

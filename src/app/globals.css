@@ -1,8 +1,9 @@
+@import "tailwindcss";
+
 html[data-theme="theme5"] {
   --color-dark: #0c0c0c;
   --color-light: #eeeeee;
   --color-dark-80: color-mix(in srgb, var(--color-dark) 80%, transparent);
   --color-light-80: color-mix(in srgb, var(--color-light) 80%, transparent);
   --color-light-20: color-mix(in srgb, var(--color-light) 20%, transparent);
-
 }

@@ -77,13 +77,15 @@ export default function Home() {
   }
 
   return (
-    <main>
-      <div className="row">
-        <h2 style={{ margin: 0 }}>avan personal tracker</h2>
-        <Link href="/stats">stats</Link>
+    <main className="max-w-[560px] mx-auto px-4 py-4 sm:p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="m-0 text-lg sm:text-xl">avan personal tracker</h2>
+        <Link href="/stats" className="underline">
+          stats
+        </Link>
       </div>
 
-      <div className="stack">
+      <div className="grid gap-4 sm:gap-6 mt-4">
         <TrackerField
           label="calories (max 2000)"
           value={totals.calories}
@@ -106,7 +108,7 @@ export default function Home() {
         />
       </div>
 
-      {loading ? <div>loading…</div> : null}
+      {loading ? <div className="mt-4">loading…</div> : null}
     </main>
   );
 }

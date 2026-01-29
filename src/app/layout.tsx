@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import "./styles.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "avan's stat tracker",
   description: "avan's stat tracker",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({
@@ -14,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="m-0 p-0 font-sans bg-[#111111] text-[#eeeeee] lowercase">
+        {children}
+      </body>
     </html>
   );
 }
