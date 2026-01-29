@@ -5,6 +5,8 @@ import Link from "next/link";
 import { TrackerField } from "@/components/TrackerField";
 import { PasswordGate } from "@/components/PasswordGate";
 import { DayStepper } from "@/components/DayStepper";
+import { MealBlock } from "@/components/MealBlock";
+import { getMealPresets } from "@/lib/meals";
 
 type StatsRow = {
   day: string; // YYYY-MM-DD
@@ -38,6 +40,7 @@ function EditPage() {
     fibre: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [mealPresets, setMealPresets] = useState<Array<{ id: string; title: string; calories: number; protein: number; fibre: number }>>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +69,10 @@ function EditPage() {
       cancelled = true;
     };
   }, [selectedDate]);
+
+  useEffect(() => {
+    setMealPresets(getMealPresets());
+  }, []);
 
   async function addDelta(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
     setTotals((t) => ({
@@ -117,6 +124,27 @@ function EditPage() {
             extraStep={5}
             onDelta={(d) => addDelta({ fibre: d })}
           />
+        </div>
+
+        <div className="mt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+            <h2 className="m-0 text-lg sm:text-xl">quick add</h2>
+            <Link href="/add-meals" className="underline">
+              add meals
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            {mealPresets.map((m) => (
+              <MealBlock
+                key={m.id}
+                title={m.title}
+                calories={m.calories}
+                protein={m.protein}
+                fibre={m.fibre}
+                onAdd={() => addDelta({ calories: m.calories, protein: m.protein, fibre: m.fibre })}
+              />
+            ))}
+          </div>
         </div>
 
         {loading ? <div className="mt-4">loading…</div> : null}
