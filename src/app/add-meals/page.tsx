@@ -2,43 +2,89 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PasswordGate } from "@/components/PasswordGate";
-import { getMealPresets, addMealPreset, type MealPreset } from "@/lib/meals";
+import { PasswordModal } from "@/components/PasswordModal";
+import { isAuthValid, setAuthGranted } from "@/lib/edit-auth";
+
+type Meal = { id: string; title: string; calories: number; protein: number; fibre: number };
 
 function AddMealsPage() {
   const [title, setTitle] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
   const [fibre, setFibre] = useState("");
-  const [meals, setMeals] = useState<MealPreset[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [mealsLoading, setMealsLoading] = useState(true);
+  const [addLoading, setAddLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+
+  async function fetchMeals() {
+    setMealsLoading(true);
+    try {
+      const res = await fetch("/api/meals", { cache: "no-store" });
+      const json = (await res.json().catch(() => null)) as { meals?: Meal[] } | null;
+      setMeals(json?.meals ?? []);
+    } catch {
+      setMeals([]);
+    } finally {
+      setMealsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setMeals(getMealPresets());
+    fetchMeals();
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    setIsAuthenticated(isAuthValid());
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isAuthenticated) {
+      setShowPasswordPrompt(true);
+      return;
+    }
     const cal = Number(calories);
     const pro = Number(protein);
     const fib = Number(fibre);
     if (!title.trim() || !Number.isFinite(cal) || !Number.isFinite(pro) || !Number.isFinite(fib)) {
       return;
     }
-    const next = addMealPreset({
-      title: title.trim(),
-      calories: cal,
-      protein: pro,
-      fibre: fib,
-    });
-    setMeals(next);
-    setTitle("");
-    setCalories("");
-    setProtein("");
-    setFibre("");
+    setAddLoading(true);
+    try {
+      const res = await fetch("/api/meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), calories: cal, protein: pro, fibre: fib }),
+      });
+      const json = (await res.json().catch(() => null)) as { meal?: Meal } | null;
+      if (json?.meal) {
+        setMeals((prev) => [...prev, json.meal!]);
+      }
+      setTitle("");
+      setCalories("");
+      setProtein("");
+      setFibre("");
+    } finally {
+      setAddLoading(false);
+    }
+  }
+
+  function handlePasswordSuccess() {
+    setAuthGranted();
+    setIsAuthenticated(true);
+    setShowPasswordPrompt(false);
   }
 
   return (
-    <PasswordGate>
+    <>
+      {showPasswordPrompt && (
+        <PasswordModal
+          onSuccess={handlePasswordSuccess}
+          onClose={() => setShowPasswordPrompt(false)}
+        />
+      )}
       <main className="max-w-[560px] mx-auto px-4 py-4 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 className="m-0 text-lg sm:text-xl">add meals</h2>
@@ -104,13 +150,16 @@ function AddMealsPage() {
           </div>
           <button
             type="submit"
-            className="inline-flex h-10 items-center justify-center border border-[#eeeeee] bg-[#111111] px-4 text-[#eeeeee] cursor-pointer touch-manipulation w-fit"
+            disabled={addLoading}
+            className="inline-flex h-10 items-center justify-center border border-[#eeeeee] bg-[#111111] px-4 text-[#eeeeee] cursor-pointer touch-manipulation w-fit disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            add meal
+            {addLoading ? "adding…" : "add meal"}
           </button>
         </form>
 
-        {meals.length > 0 && (
+        {mealsLoading ? (
+          <div className="mt-8 text-sm">loading saved meals…</div>
+        ) : meals.length > 0 ? (
           <div className="mt-8">
             <h3 className="text-sm sm:text-base mb-3">saved meals ({meals.length})</h3>
             <ul className="list-none p-0 m-0 flex flex-col gap-2">
@@ -124,9 +173,9 @@ function AddMealsPage() {
               ))}
             </ul>
           </div>
-        )}
+        ) : null}
       </main>
-    </PasswordGate>
+    </>
   );
 }
 

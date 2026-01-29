@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { TrackerField } from "@/components/TrackerField";
-import { PasswordGate } from "@/components/PasswordGate";
 import { DayStepper } from "@/components/DayStepper";
 import { MealBlock } from "@/components/MealBlock";
-import { getMealPresets } from "@/lib/meals";
+import { PasswordModal } from "@/components/PasswordModal";
+import { isAuthValid, setAuthGranted } from "@/lib/edit-auth";
 
 type StatsRow = {
   day: string; // YYYY-MM-DD
@@ -41,6 +41,13 @@ function EditPage() {
   });
   const [loading, setLoading] = useState(true);
   const [mealPresets, setMealPresets] = useState<Array<{ id: string; title: string; calories: number; protein: number; fibre: number }>>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const pendingActionRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    setIsAuthenticated(isAuthValid());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,10 +78,26 @@ function EditPage() {
   }, [selectedDate]);
 
   useEffect(() => {
-    setMealPresets(getMealPresets());
+    let cancelled = false;
+    async function loadMeals() {
+      try {
+        const res = await fetch("/api/meals", { cache: "no-store" });
+        const json = (await res.json().catch(() => null)) as { meals?: Array<{ id: string; title: string; calories: number; protein: number; fibre: number }> } | null;
+        const list = json?.meals ?? [];
+        if (!cancelled) {
+          setMealPresets(list);
+        }
+      } catch {
+        if (!cancelled) setMealPresets([]);
+      }
+    }
+    loadMeals();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  async function addDelta(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
+  async function addDeltaReal(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
     setTotals((t) => ({
       calories: Math.max(0, t.calories + (delta.calories ?? 0)),
       protein: Math.max(0, t.protein + (delta.protein ?? 0)),
@@ -88,8 +111,36 @@ function EditPage() {
     }).catch(() => null);
   }
 
+  function addDelta(delta: Partial<Pick<StatsRow, "calories" | "protein" | "fibre">>) {
+    if (!isAuthenticated) {
+      pendingActionRef.current = () => addDeltaReal(delta);
+      setShowPasswordPrompt(true);
+      return;
+    }
+    addDeltaReal(delta);
+  }
+
+  function handlePasswordSuccess() {
+    setAuthGranted();
+    setIsAuthenticated(true);
+    setShowPasswordPrompt(false);
+    if (pendingActionRef.current) {
+      pendingActionRef.current();
+      pendingActionRef.current = null;
+    }
+  }
+
   return (
-    <PasswordGate>
+    <>
+      {showPasswordPrompt && (
+        <PasswordModal
+          onSuccess={handlePasswordSuccess}
+          onClose={() => {
+            setShowPasswordPrompt(false);
+            pendingActionRef.current = null;
+          }}
+        />
+      )}
       <main className="max-w-[560px] mx-auto px-4 py-4 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 className="m-0 text-lg sm:text-xl">avan personal tracker</h2>
@@ -149,7 +200,7 @@ function EditPage() {
 
         {loading ? <div className="mt-4">loading…</div> : null}
       </main>
-    </PasswordGate>
+    </>
   );
 }
 

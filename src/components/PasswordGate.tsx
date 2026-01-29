@@ -2,36 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { isAuthValid, setAuthGranted } from "@/lib/edit-auth";
 
 type PasswordGateProps = {
   children: React.ReactNode;
 };
-
-const AUTH_STORAGE_KEY = "edit_access";
-const AUTH_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks in milliseconds
-
-function isAuthValid(): boolean {
-  try {
-    const authData = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!authData) return false;
-
-    const { timestamp } = JSON.parse(authData);
-    const now = Date.now();
-    const elapsed = now - timestamp;
-
-    // Check if less than 2 weeks have passed
-    return elapsed < AUTH_DURATION_MS;
-  } catch {
-    return false;
-  }
-}
-
-function setAuthGranted() {
-  localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({ granted: true, timestamp: Date.now() })
-  );
-}
 
 export function PasswordGate({ children }: PasswordGateProps) {
   const [password, setPassword] = useState("");
@@ -39,12 +14,8 @@ export function PasswordGate({ children }: PasswordGateProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if already authenticated (stored in localStorage with 2-week expiration)
     if (isAuthValid()) {
       setIsAuthenticated(true);
-    } else {
-      // Clear expired auth
-      localStorage.removeItem(AUTH_STORAGE_KEY);
     }
   }, []);
 
