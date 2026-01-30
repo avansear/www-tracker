@@ -141,7 +141,7 @@ function EditPage() {
           }}
         />
       )}
-      <main className="max-w-[560px] mx-auto px-4 py-4 sm:p-4">
+      <main className="max-w-[560px] mx-auto px-4 py-4 pb-24 sm:p-4 sm:pb-24">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 className="m-0 text-lg sm:text-xl">avan personal tracker</h2>
           <Link href="/" className="underline">
